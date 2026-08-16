@@ -1,69 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud PHP Screenshotter</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #f4f6f8; 
-            color: #333; 
-            max-width: 700px; 
-            margin: 40px auto; 
-            padding: 20px; 
-        }
-        .card { 
-            background: white; 
-            padding: 24px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-        }
-        h1 { 
-            margin-top: 0; 
-            font-size: 24px; 
-            color: #111; 
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        input[type="url"] { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            margin-bottom: 16px; 
-        }
-        button { 
-            background: #0070f3; 
-            color: white; 
-            border: none; 
-            padding: 12px 24px; 
-            font-size: 16px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: 500; 
-            width: 100%; 
-        }
-        button:hover { 
-            background: #0061d5; 
-        }
-    </style>
-</head>
-<body>
+<?php
 
-<div class="card">
-    <h1>📸 URL Website Screenshotter</h1>
-    <form action="screenshot.php" method="POST">
-        <label for="url">Enter Website URL:</label>
-        <input type="url" id="url" name="url" placeholder="https://example.com" required>
-        <button type="submit">Capture Website</button>
-    </form>
-</div>
+require __DIR__ . '/vendor/autoload.php';
 
-</body>
-</html>
+use HeadlessChromium\BrowserFactory;
+
+// Get target URL from query string, default to google.com
+$url = $_GET['url'] ?? 'https://google.com';
+
+// Validate URL
+if (!filter_var($url, FILTER_VALIDATE_URL)) {
+    http_response_code(400);
+    echo "Invalid URL provided.";
+    exit;
+}
+
+try {
+    // Point to the installed Chromium binary
+    $browserFactory = new BrowserFactory(getenv('CHROME_PATH') ?: '/usr/bin/chromium');
+
+    // Start browser with flags required for running inside Docker
+    $browser = $browserFactory->createBrowser([
+        'noSandbox' => true,
+        'customFlags' => [
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--headless=new'
+        ]
+    ]);
+
+    // Create a new page and navigate
+    $page = $browser->createPage();
+    $page->navigate($url)->waitForNavigation();
+
+    // Set viewport resolution
+    $page->setViewport(1280, 720)->await();
+
+    // Take screenshot and output directly to the browser
+    $screenshot = $page->screenshot();
+
+    header('Content-Type: image/png');
+    echo base64_decode($screenshot->getBase64());
+
+} catch (\Exception $e) {
+    http_response_code(500);
+    echo "Error taking screenshot: " . $e->getMessage();
+} finally {
+    if (isset($browser)) {
+        $browser->close();
+    }
+}
