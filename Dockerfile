@@ -1,12 +1,15 @@
 FROM php:8.3-apache
 
-# Install Chromium, fonts, git, and unzip tools required by Composer
+# Install Chromium, fonts, git, unzip tools, and PHP extension dependencies
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-freefont-ttf \
     unzip \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+# Install required PHP extension for chrome-php
+RUN docker-php-ext-install sockets
 
 # Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
