@@ -3,7 +3,7 @@ require 'vendor/autoload.php';
 
 use HeadlessChromium\BrowserFactory;
 
-// Redirect users back if they try to access this file directly
+// Redirect users back if accessed directly without POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['url'])) {
     header('Location: index.php');
     exit;
@@ -15,12 +15,12 @@ if (!$target_url) {
     die("Invalid URL format provided.");
 }
 
-// Target the Chromium binary installed via your Dockerfile
+// Target the Chromium binary installed via Dockerfile
 $factory = new BrowserFactory('/usr/bin/chromium');
 
-// Set configuration constraints to run smoothly inside Railway's container limits
+// Set configuration constraints to run smoothly inside Railway
 $browser = $factory->createBrowser([
-    'windowSize'   =>,
+    'windowSize'   => [1920, 1080],
     'customFlags'  => [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -39,7 +39,7 @@ try {
     // Create a unique image name using a timestamp
     $filename = 'shot_' . time() . '.png';
     
-    // Save the image to your public web directory
+    // Save the image to the public web directory
     $page->screenshot()->saveToFile($filename);
     
     // Display the captured image back to the user
@@ -64,7 +64,7 @@ try {
     echo '<div style="color: red; padding: 20px; font-family: sans-serif;">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
     echo '<br><a href="index.php">Go Back</a>';
 } finally {
-    // ALWAYS close the browser process to prevent background resource leaks!
+    // ALWAYS close the browser process to prevent leaks
     $browser->close();
 }
 ?>
