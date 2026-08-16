@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Install Chromium, fonts, git, unzip, and sockets dependencies
+# Install Chromium, fonts, git, unzip, and PHP extension dependencies
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-freefont-ttf \
@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install required PHP extension
+# Install required sockets extension
 RUN docker-php-ext-install sockets
 
 # Install Composer
@@ -16,17 +16,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy project files
+# Copy application files
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Fix Apache MPM conflict
+# Disable conflicting MPM modules and enable prefork
 RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 
-# Grant directory permissions
+# Set permissions for file writes
 RUN chmod -R 777 /var/www/html
+
+# Configure Apache to listen on Railway's runtime $PORT
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 EXPOSE 80
 
