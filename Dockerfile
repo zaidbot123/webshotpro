@@ -22,7 +22,7 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Disable conflicting MPM modules explicitly
+# Disable conflicting Apache MPM modules
 RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 
 # Set folder permissions
