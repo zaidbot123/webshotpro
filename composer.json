@@ -1,5 +1,14 @@
 {
+    "name": "app/screenshot-service",
+    "description": "PHP Headless Chrome Screenshot API",
+    "type": "project",
     "require": {
-        "chrome-php/chrome": "^1.9"
+        "php": ">=8.1",
+        "chrome-php/chrome": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
     }
 }
