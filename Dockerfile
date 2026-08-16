@@ -27,23 +27,23 @@ RUN composer install --no-dev --optimize-autoloader
 # Set directory permissions
 RUN chmod -R 777 /var/www/html
 
-# Configure Nginx to proxy PHP and handle dynamic $PORT
+# Configure Nginx config template (escaping $uri and $query_string with \)
 RUN echo 'server {\n\
     listen ${PORT};\n\
     root /var/www/html;\n\
     index index.php index.html;\n\
     location / {\n\
-        try_files $uri $uri/ /index.php?$query_string;\n\
+        try_files $$uri $$uri/ /index.php?$$query_string;\n\
     }\n\
     location ~ \.php$ {\n\
         fastcgi_pass 127.0.0.1:9000;\n\
         fastcgi_index index.php;\n\
         include fastcgi_params;\n\
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        fastcgi_param SCRIPT_FILENAME $$document_root$$fastcgi_script_name;\n\
     }\n\
-}' > /etc/nginx/sites-available/default
+}' > /etc/nginx/sites-available/default.template
 
-EXPOSE 80
+EXPOSE 8080
 
-# Substitute $PORT into Nginx config at boot, start PHP-FPM, and run Nginx
-CMD ["sh", "-c", "envsubst '$$PORT' < /etc/nginx/sites-available/default > /etc/nginx/sites-enabled/default && php-fpm -D && nginx -g 'daemon off;'"]
+# Substitute PORT at runtime and start PHP-FPM + Nginx
+CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/sites-available/default.template > /etc/nginx/sites-enabled/default && php-fpm -D && nginx -g 'daemon off;'"]
