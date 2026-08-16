@@ -22,7 +22,7 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Fix Apache MPM conflict by keeping only prefork
+# Disable conflicting MPM modules explicitly
 RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 
 # Set folder permissions
@@ -30,5 +30,5 @@ RUN chmod -R 777 /var/www/html
 
 EXPOSE 80
 
-# Configure port at container start and launch Apache
+# Configure port dynamically at boot and launch Apache
 CMD ["sh", "-c", "sed -i 's/80/'\"${PORT:-80}\"'/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && exec apache2-foreground"]
