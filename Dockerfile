@@ -22,13 +22,14 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Disable conflicting Apache MPM modules
-RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
+# Completely remove all enabled MPM symlinks to eliminate the conflict, then enable prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork
 
-# Set folder permissions
+# Set write permissions
 RUN chmod -R 777 /var/www/html
 
 EXPOSE 80
 
-# Configure port dynamically at boot and launch Apache
+# Bind port dynamically at startup and run Apache
 CMD ["sh", "-c", "sed -i 's/80/'\"${PORT:-80}\"'/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && exec apache2-foreground"]
