@@ -22,13 +22,13 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Disable conflicting MPM modules and enable prefork
+# Disable conflicting Apache MPM modules and enable prefork
 RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
 
-# Set permissions for file writes
+# Set write permissions
 RUN chmod -R 777 /var/www/html
 
-# Configure Apache to listen on Railway's runtime $PORT
+# Configure Apache to listen on Railway's $PORT dynamically
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 EXPOSE 80
