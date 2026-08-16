@@ -1,8 +1,9 @@
 FROM php:8.3-fpm
 
-# Install Nginx, Chromium, fonts, git, unzip, and PHP extension dependencies
+# Install Nginx, gettext (for envsubst), Chromium, fonts, git, unzip, and PHP extension dependencies
 RUN apt-get update && apt-get install -y \
     nginx \
+    gettext \
     chromium \
     fonts-freefont-ttf \
     unzip \
